@@ -1,0 +1,10 @@
+<div #shapes class="shape" (mousedown)="selectShape($event,'rectangle')" draggable="true">Rectangle</div>
+<div #shapes class="shape" (mousedown)="selectShape($event,'circle')" draggable="true">Circle</div>
+<div class="shape" (click)="clearCanvas()" draggable="true">Clear</div>
+
+<canvas 
+	#canvas width="800"
+	height="600"
+	(mousedown)="drawStart($event)"
+	(mouseup)="drawDragged($event)">
+</canvas>
