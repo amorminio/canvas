@@ -16,12 +16,12 @@ export class BoardComponent implements OnInit {
 	@ViewChildren('shapes') shapes!: QueryList<ElementRef>;
 
   private ctx!: CanvasRenderingContext2D;
-
-	
   private startX!: number;
   private startY!: number;
   private endX!: number;
   private endY!: number;
+
+	public menuSelectedShape!:string
 
 	constructor(private _board:BoardService){
 		
@@ -34,6 +34,8 @@ export class BoardComponent implements OnInit {
     this.ctx.lineJoin = 'round';
     this.ctx.lineCap = 'round';
 
+		//Event Listeners
+		
 		this.canvas.nativeElement.addEventListener('dragover', (event:any) => {
       event.preventDefault();
     });
@@ -48,6 +50,18 @@ export class BoardComponent implements OnInit {
       }
     });
 
+		this.canvas.nativeElement.addEventListener('click', (event:MouseEvent) => {
+			this._board.detectShapeOnCavas(event)
+		});
+
+		this._board.menuSelectedShape$.subscribe((data)=>{
+			this.menuSelectedShape = data
+		})
+
+		
+
+
+
   }
 
 	ngAfterViewInit() {
@@ -60,6 +74,8 @@ export class BoardComponent implements OnInit {
 			});
 			
 		});
+
+		
 	}
 	
 
@@ -82,55 +98,79 @@ export class BoardComponent implements OnInit {
   }
 
 	drawStop(event: MouseEvent) {
-		if(!this.selectedShape) {return}
+		if(!this.menuSelectedShape) {return}
 
-		if(this.selectedShape === 'rectangle'){
+		if(this.menuSelectedShape === 'rectangle'){
 			this.drawFreeRectangle(this.startX, this.startY, event.offsetX, event.offsetY);    
 		}
 
-		if(this.selectedShape === 'circle'){
+		if(this.menuSelectedShape === 'circle'){
 			this.drawCircle(this.startX, this.startY, event.offsetX, event.offsetY);    
 		}
 
-		this.selectedShape = ''
+		this.menuSelectedShape = ''
 	}
 
 	drawDragged(event: MouseEvent){
 		
-		if(!this.selectedShape) {return}
+		if(!this.menuSelectedShape) {return}
 
-		if(this.selectedShape === 'rectangle'){
-			// this.drawRectangle(event.offsetX, event.offsetY, event.offsetX+150, event.offsetY+100);    
-			this.drawRectangle(event.offsetX, event.offsetY);
+		if(this.menuSelectedShape === 'rectangle'){
+			this.drawDragRectangle(event.offsetX, event.offsetY);
 		}
 
-		if(this.selectedShape === 'circle'){
+		if(this.menuSelectedShape === 'circle'){
 			this.drawCircle(event.offsetX, event.offsetY, event.offsetX+30, event.offsetY+30);    
 		}
 
-		this.selectedShape = ''
+		this._board.setMenuSelectedShape = ''
 
 	}
 
-	drawRectangle(x1: number, y1: number) {
-    const width = SHAPES.rectangle.width ;
+	drawDragRectangle(x1: number, y1: number) {
+    const width = SHAPES.rectangle.width;
     const height = SHAPES.rectangle.height;
+		x1 = x1 - width/2
+		y1 = y1 - height/2
 
-    this.ctx.fillStyle = '#4682B4'
-    this.ctx.fillRect(x1 - width/2, y1 - height/2, width, height);
-    this.ctx.strokeRect(x1 - width/2, y1 - height/2, width, height);
+    this.ctx.fillStyle = 'rgba(166, 58, 80, 1)'
+    this.ctx.fillRect(x1, y1, width, height);
+    this.ctx.strokeRect(x1, y1, width, height);
 
 		const newShape:Shape = {
 			type:'rectangle',
 			fillColor :'#4682B4',
 			startX:x1,
 			startY:y1,
-			endY:height,
-			endX:width,
+			height:height,
+			width:width,
 		}
 
 		this._board.addShape(newShape)
 		this._board.allShapes()
+  }
+
+	drawRectangle(x1: number, y1: number,x2:number,y2:number,redraw:boolean=false) {
+    const width = x2
+    const height = y2
+    
+    this.ctx.fillRect(x1, y1 , width, height);
+    this.ctx.strokeRect(x1, y1, width, height);
+
+		
+		if(!redraw){
+			const newShape:Shape = {
+				type:'rectangle',
+				fillColor :'#4682B4',
+				startX:x1,
+				startY:y1,
+				height:height,
+				width:width,
+			}
+
+			this._board.addShape(newShape)
+		}
+
   }
 
 	drawFreeRectangle(x1: number, y1: number, x2: number, y2: number) {
@@ -142,45 +182,58 @@ export class BoardComponent implements OnInit {
     this.ctx.strokeRect(x1, y1, width, height);
   }
 
-	drawCircle(x1: number, y1: number, x2: number, y2: number) {
+	drawCircle(x1: number, y1: number, x2: number, y2: number, redraw:boolean = false) {
     const radius = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-    this.ctx.fillStyle = '#4682B4'; 
+    
     this.ctx.beginPath();
     this.ctx.arc(x1, y1, radius, 0, Math.PI * 2);
     this.ctx.fill();
     this.ctx.stroke();
 
-		const newShape:Shape = {
-			type:'circle',
-			fillColor :'#4682B4',
-			startX:x1,
-			startY:y1,
-			endY:y2,
-			endX:x2,
-		}
+		if(!redraw){
+			const newShape:Shape = {
+				type:'circle',
+				fillColor :'#4682B4',
+				startX:x1,
+				startY:y1,
+				height:y2,
+				width:x2,
+			}
 
-		this._board.addShape(newShape)
+			this._board.addShape(newShape)
+		}
   }
 
 	repaint(){
-		const shapes = this._board.shapesArray
+		console.log('tete');
 		
-		shapes.forEach(function(x){
-			switch (x.type){
-				case 'rectangle':
-					// this.drawRectangle(x.startX, x.startY);
+		const shapes = this._board.getShapes
 
-			}
-			// this.drawCircle(event.offsetX, event.offsetY, event.offsetX+30, event.offsetY+30);    
+		shapes.forEach((shape)=>{
+			console.log('shape',shape);
 			
+			this.ctx.fillStyle = shape.fillColor
+			
+			switch (shape.type){
+				case 'rectangle':
+					this.drawRectangle(shape.startX, shape.startY,shape.width,shape.height,true);
+					break
+				case 'circle':
+					this.drawCircle(shape.startX, shape.startY,shape.width,shape.height,true);
+					break
+				default:
+					console.info('Shape not found')
+			}
 		})
+
+		this._board.allShapes()
 
 	}
 
 	selectShape(event:MouseEvent,shape:string){
 		
 		event.stopPropagation();
-		this.selectedShape = shape
+		this._board.setMenuSelectedShape = shape
 	}
 
 }
