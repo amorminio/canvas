@@ -1,21 +1,26 @@
-<!-- <mat-toolbar>
-<button mat-icon-button class="example-icon" aria-label="Example icon-button with menu icon">
-	<mat-icon>menu</mat-icon>
-</button>
-<span>My App</span>
-<span class="example-spacer"></span>
-<button mat-icon-button class="example-icon favorite-icon" aria-label="Example icon-button with heart icon">
-	<mat-icon>favorite</mat-icon>
-</button>
-<button mat-icon-button class="example-icon" aria-label="Example icon-button with share icon">
-	<mat-icon>share</mat-icon>
-</button>
-</mat-toolbar> -->
 
 <mat-drawer-container class="example-container">
-  <mat-drawer #drawer class="menu" mode="side" opened="true" disableClose="true">
-		<div #shapes class="shape" (mousedown)="selectShape($event,'rectangle')" draggable="true">Rectangle</div>
-		<div #shapes class="shape" (mousedown)="selectShape($event,'circle')" draggable="true">Circle</div>
+  <mat-drawer #drawer class="menu"  mode="side" opened="true" disableClose="true">
+		<div class="shape-container">
+			<div class="shape-column">
+				<div #shapes class="shape" (mousedown)="selectShape($event,'rectangle')" draggable="true">
+					<img src="assets/images/shapes/003-rectangular-shape-outline.png" alt="">
+				</div>
+				<div #shapes class="shape" (mousedown)="selectShape($event,'diamond')" draggable="true">
+					<img src="assets/images/shapes/diamond.png" alt="">
+				</div>
+			</div>
+			<div class="shape-column">
+				<div #shapes class="shape" (mousedown)="selectShape($event,'round-rectangle')" draggable="true">
+					<img src="assets/images/shapes/002-rounded-rectangle.png" alt="">
+				</div>
+			</div>
+			<div class="shape-column">
+				<div #shapes class="shape" (mousedown)="selectShape($event,'circle')" draggable="true">
+					<img src="assets/images/shapes/001-circle.png" alt="">
+				</div>
+			</div>
+		</div>
 		<div class="shape" (click)="repaint()">Restore</div>
 		<div class="shape" (click)="clearCanvas()" draggable="true">Clear</div>
 

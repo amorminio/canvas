@@ -54,6 +54,39 @@ export class BoardService {
 		else if (shape.type === 'rectangle') {
 			return(	x >= shape.startX && x <= shape.startX + shape.width && y >= shape.startY && y <= shape.startY + shape.height	)
 		}
+		else if (shape.type === 'round-rectangle') {
+			return(	x >= shape.startX && x <= shape.startX + shape.width && y >= shape.startY && y <= shape.startY + shape.height	)
+		}
+		else if (shape.type === 'diamond') {
+
+			// console.log ('centerX :' , shape.startX)
+			// console.log ('centerY :' , shape.startY)
+			// console.log ('width :' , shape.width)
+			// console.log ('height :' , shape.height)
+
+			// Vertex Coordinates 
+			const vertexA = {x:shape.startX-shape.width/2,y:shape.startY}
+			const vertexB = {x:shape.startX,y:shape.startY+shape.height/2}
+			const vertexC = {x:shape.startX+shape.width/2,y:shape.startY}
+			const vertexD = {x:shape.startX,y:shape.startY-shape.height/2}
+
+			// console.log ('va :' , vertexA)
+			// console.log ('vb :' , vertexB)
+			// console.log ('vc :' , vertexC)
+			// console.log ('vd :' , vertexD)
+
+			const diagonal= Math.sqrt( (Math.pow((vertexC.x - vertexA.x),2)) + Math.pow((vertexC.y - vertexA.y),2) )
+
+			// Distances from canvas event
+			const distance1 = Math.sqrt( (Math.pow((x - vertexA.x),2)) + Math.pow((y - vertexA.y),2) )
+			const distance2 = Math.sqrt( (Math.pow((x - vertexB.x),2)) + Math.pow((y - vertexB.y),2) )
+			const distance3 = Math.sqrt( (Math.pow((x - vertexC.x),2)) + Math.pow((y - vertexC.y),2) )
+			const distance4 = Math.sqrt( (Math.pow((x - vertexD.x),2)) + Math.pow((y - vertexD.y),2) )
+
+			return distance1 < diagonal /2|| distance2 < diagonal/2 || distance3 < diagonal/2 || distance4 < diagonal/2
+
+			
+		}
 
 		return false;
 	}
