@@ -1,6 +1,6 @@
 import { Component, ElementRef, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { BoardService } from 'src/app/_services/board.service';
-import { SHAPES } from 'src/app/_shared/constants';
+import { SHAPES,COLORS } from 'src/app/_shared/constants';
 import { Shape } from '../../_shared/shape.interface';
 
 
@@ -22,6 +22,7 @@ export class BoardComponent implements OnInit {
 	private endY!: number;
 
 	public menuSelectedShape!: string
+	public boardSelectedShape!: Shape
 
 	constructor(private _board: BoardService) {
 
@@ -57,6 +58,14 @@ export class BoardComponent implements OnInit {
 		this._board.menuSelectedShape$.subscribe((data) => {
 			this.menuSelectedShape = data
 		})
+		
+		
+		
+		
+		this._board.repaint$.subscribe((shape) => {
+			this.repaint()
+
+		})
 
 	}
 
@@ -83,7 +92,7 @@ export class BoardComponent implements OnInit {
 		}
 
 		else if (this.menuSelectedShape === 'circle') {
-			this.drawCircle(event.offsetX, event.offsetY, event.offsetX + 30, event.offsetY + 30);
+			this.drawDragCircle(event.offsetX, event.offsetY, event.offsetX + 30, event.offsetY + 30);
 		}
 
 		else if (this.menuSelectedShape === 'round-rectangle') {
@@ -99,8 +108,7 @@ export class BoardComponent implements OnInit {
 	}
 
 	drawDragDiamond(x1: number, y1: number) {
-		console.log('1');
-		
+
 		const width = SHAPES.diamond.width;
 		const height = SHAPES.diamond.height;
 
@@ -118,11 +126,34 @@ export class BoardComponent implements OnInit {
 			startY: y1,
 			height: height,
 			width: width,
+			strokeStyle:COLORS.strokeColor.color
 		}
 
 		this._board.addShape(newShape)
 		this._board.allShapes()
   }
+
+	drawDragCircle(x1: number, y1: number, x2: number, y2: number, redraw: boolean = false) {
+		// const radius = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+		const radius = 20
+
+		this.ctx.beginPath();
+		this.ctx.arc(x1, y1, radius, 0, Math.PI * 2);
+		this.ctx.stroke();
+
+		if (!redraw) {
+			const newShape: Shape = {
+				type: 'circle',
+				startX: x1,
+				startY: y1,
+				height: y2,
+				width: x2,
+				strokeStyle:COLORS.strokeColor.color
+			}
+
+			this._board.addShape(newShape)
+		}
+	}
 
 	drawDragRectangle(x1: number, y1: number) {
 		const width = SHAPES.rectangle.width;
@@ -131,7 +162,6 @@ export class BoardComponent implements OnInit {
 		y1 = y1 - height / 2
 
 		this.ctx.fillStyle = 'none'
-		// this.ctx.fillRect(x1, y1, width, height);
 		this.ctx.strokeRect(x1, y1, width, height);
 
 		const newShape: Shape = {
@@ -141,6 +171,7 @@ export class BoardComponent implements OnInit {
 			startY: y1,
 			height: height,
 			width: width,
+			strokeStyle:COLORS.strokeColor.color
 		}
 
 		this._board.addShape(newShape)
@@ -164,26 +195,49 @@ export class BoardComponent implements OnInit {
 			startY: y1,
 			height: height,
 			width: width,
+			strokeStyle:COLORS.strokeColor.color
 		}
 
 		this._board.addShape(newShape)
 		this._board.allShapes()
 	}
 
-	drawRectangle(x1: number, y1: number, x2: number, y2: number, redraw: boolean = false) {
-		const width = x2
-		const height = y2
+	drawCircle(shape:Shape, redraw: boolean = false) {
+		// const radius = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+		const radius = 20
 
-		// this.ctx.fillRect(x1, y1 , width, height);
-		this.ctx.strokeRect(x1, y1, width, height);
+		this.ctx.beginPath();
+		this.ctx.strokeStyle = shape.strokeStyle || COLORS.strokeColor.color
+		this.ctx.arc(shape.startX, shape.startY, radius, 0, Math.PI * 2);
+		this.ctx.stroke();
+
+		if (!redraw) {
+			const newShape: Shape = {
+				type: 'circle',
+				startX: shape.startX,
+				startY: shape.startY,
+				height: shape.height,
+				width: shape.width,
+				strokeStyle:shape.strokeStyle || COLORS.strokeStyle.color
+			}
+
+			this._board.addShape(newShape)
+		}
+	}
+
+	drawRectangle(shape:Shape,redraw: boolean = false) {
+
+		this.ctx.strokeStyle = shape.strokeStyle || COLORS.strokeStyle.color
+		this.ctx.strokeRect(shape.startX, shape.startY, shape.width, shape.height);
 
 		if (!redraw) {
 			const newShape: Shape = {
 				type: 'rectangle',
-				startX: x1,
-				startY: y1,
-				height: height,
-				width: width,
+				startX: shape.startX,
+				startY: shape.startY,
+				height: shape.height,
+				width: shape.width,
+				strokeStyle:shape.strokeStyle
 			}
 
 			this._board.addShape(newShape)
@@ -191,21 +245,21 @@ export class BoardComponent implements OnInit {
 
 	}
 
-	drawRoundRectangle(x1: number, y1: number, x2: number, y2: number, redraw: boolean = false) {
-		const width = x2
-		const height = y2
+	drawRoundRectangle(shape:Shape, redraw: boolean = false) {
 
 		this.ctx.beginPath();
-		this.ctx.roundRect(x1, y1, width, height, 10);
+		this.ctx.strokeStyle = shape.strokeStyle || COLORS.strokeColor.color
+		this.ctx.roundRect(shape.startX, shape.startY, shape.width, shape.height, 10);
 		this.ctx.stroke();
 
 		if (!redraw) {
 			const newShape: Shape = {
 				type: 'round-rectangle',
-				startX: x1,
-				startY: y1,
-				height: height,
-				width: width,
+				startX: shape.startX,
+				startY: shape.startY,
+				height: shape.height,
+				width:shape.width,
+				strokeStyle:COLORS.strokeColor.color
 			}
 
 			this._board.addShape(newShape)
@@ -213,26 +267,25 @@ export class BoardComponent implements OnInit {
 
 	}
 
-	drawDiamond(x1: number, y1: number, x2: number, y2: number, redraw: boolean = false) {
+	drawDiamond(shape:Shape, redraw: boolean = false) {
 
-		const width = x2
-		const height = y2
-
-    this.ctx.beginPath();
-    this.ctx.moveTo(x1-(width/2), y1);
-    this.ctx.lineTo(x1, y1 +(height/2));
-    this.ctx.lineTo(x1 + (width/2), y1);
-    this.ctx.lineTo(x1,y1 - (height/2));
+		this.ctx.beginPath();
+		this.ctx.strokeStyle = shape.strokeStyle || COLORS.strokeColor.color
+    this.ctx.moveTo(shape.startX-(shape.width/2), shape.startY);
+    this.ctx.lineTo(shape.startX, shape.startY +(shape.height/2));
+    this.ctx.lineTo(shape.startX + (shape.width/2), shape.startY);
+    this.ctx.lineTo(shape.startX,shape.startY - (shape.height/2));
     this.ctx.closePath();
     this.ctx.stroke();
 
 		if (!redraw) {
 			const newShape: Shape = {
 				type: 'diamond',
-				startX: x1,
-				startY: y1,
-				height: height,
-				width: width,
+				startX: shape.startX,
+				startY: shape.startY,
+				height: shape.height,
+				width: shape.width,
+				strokeStyle:shape.strokeStyle || COLORS.strokeStyle.color
 			}
 
 			this._board.addShape(newShape)
@@ -243,47 +296,27 @@ export class BoardComponent implements OnInit {
 
 	}
 
-	drawCircle(x1: number, y1: number, x2: number, y2: number, redraw: boolean = false) {
-		// const radius = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-		const radius = 20
-
-		this.ctx.beginPath();
-		this.ctx.arc(x1, y1, radius, 0, Math.PI * 2);
-		this.ctx.stroke();
-
-		if (!redraw) {
-			const newShape: Shape = {
-				type: 'circle',
-				startX: x1,
-				startY: y1,
-				height: y2,
-				width: x2,
-			}
-
-			this._board.addShape(newShape)
-		}
-	}
+	
 
 	repaint() {
+
 		this.clearCanvas()
 
 		const shapes = this._board.getShapes
 
 		shapes.forEach((shape) => {
-			this.ctx.fillStyle = shape.fillColor
-
 			switch (shape.type) {
 				case 'rectangle':
-					this.drawRectangle(shape.startX, shape.startY, shape.width, shape.height, true);
+					this.drawRectangle(shape, true);
 					break
 				case 'round-rectangle':
-					this.drawRoundRectangle(shape.startX, shape.startY, shape.width, shape.height, true);
+					this.drawRoundRectangle(shape, true);
 					break
 				case 'circle':
-					this.drawCircle(shape.startX, shape.startY, shape.width, shape.height, true);
+					this.drawCircle(shape, true);
 					break
 				case 'diamond':
-					this.drawDiamond(shape.startX, shape.startY, shape.width, shape.height, true);
+					this.drawDiamond(shape, true);
 					break
 				default:
 					console.info('Shape not found')
@@ -298,40 +331,5 @@ export class BoardComponent implements OnInit {
 		event.stopPropagation();
 		this._board.setMenuSelectedShape = shape
 	}
-
-
-	// NOT USED =============================================================================
-	// Initial development references
-	drawFreeRectangle(x1: number, y1: number, x2: number, y2: number) {
-		const width = x2 - x1;
-		const height = y2 - y1;
-		this.ctx.fillRect(x1, y1, width, height);
-		this.ctx.strokeRect(x1, y1, width, height);
-	}
-
-	draw(event: MouseEvent) {
-		this.endX = event.offsetX;
-		this.endY = event.offsetY;
-		this.drawFreeRectangle(this.startX, this.startY, this.endX, this.endY);
-	}
-
-	drawStart(event: MouseEvent) {
-		this.startX = event.offsetX;
-		this.startY = event.offsetY;
-	}
-
-	drawStop(event: MouseEvent) {
-		if (!this.menuSelectedShape) { return }
-
-		if (this.menuSelectedShape === 'rectangle') {
-			this.drawFreeRectangle(this.startX, this.startY, event.offsetX, event.offsetY);
-		}
-
-		if (this.menuSelectedShape === 'circle') {
-			this.drawCircle(this.startX, this.startY, event.offsetX, event.offsetY);
-		}
-
-		this.menuSelectedShape = ''
-	}
-
+	
 }

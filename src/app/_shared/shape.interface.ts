@@ -7,7 +7,8 @@ export interface Shape {
   width: number
   height: number
   fillColor?:string
-	rx?:number
-	ry?:number
+	strokeStyle?:string
+
+
 	
 }

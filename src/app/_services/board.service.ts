@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Shape } from '../_shared/shape.interface';
 import { BehaviorSubject } from 'rxjs';
+import * as _ from 'lodash';
+import { COLORS } from '../_shared/constants';
 
 
 @Injectable({
@@ -10,7 +12,13 @@ export class BoardService {
 
 	private shapes:Array<Shape> = []
 	private idCounter:number = 1
-	private boardSelectedShape = new BehaviorSubject<any>('');
+	
+	private boardSelectedShapeChanges:boolean = false
+	// private boardSelectedShape = new BehaviorSubject<Shape>({type:'none',startX:0,startY:0,width:0,height:0});
+	private repaint = new BehaviorSubject<boolean>(false);
+	public repaint$ = this.repaint.asObservable();
+	
+	private boardSelectedShape = new BehaviorSubject<any>(null);
 	public boardSelectedShape$ = this.boardSelectedShape.asObservable();
 
 	private menuSelectedShape = new BehaviorSubject<any>('');
@@ -19,15 +27,23 @@ export class BoardService {
   constructor() { }
 
 	addShape(shape:Shape):void{
-		shape.id = this.idCounter
-		this.idCounter += 1		
-		this.shapes.push(shape)
+		if(shape.id){
+			this.shapes.push(shape)
+		}
+		else{
+			shape.id = this.idCounter
+			this.idCounter += 1		
+			this.shapes.push(shape)
+		}
 	}
 
 	allShapes():void{
 		console.info(this.shapes);
 	}
 
+	// TODO - Detects the first element on the array... it needs to check it all
+	// TODO - Check if more than one shape on a point selection
+	// TODO - A can only clear selection after check the entire array ... 
 	detectShapeOnCavas(event:MouseEvent){
 		const clickX = event.offsetX;
 		const clickY = event.offsetY;
@@ -35,15 +51,18 @@ export class BoardService {
 		// Iterate through shapes to check for selection
 		for (let i = this.shapes.length - 1; i >= 0; i--) {
 			const shape = this.shapes[i];
-	
+			debugger
 			if (this.isPointInShape(clickX, clickY, shape)) {
-				// Handle the selected shape
-				console.info('Selected shape:', shape);
-				break; 
+				this.selectShape(shape)
+				break;
+			}else{
+				if(this.boardSelectedShape.getValue()){
+					this.unselectShape()
+				}
 			}
-		}
+			}
 	}
-
+	
 	isPointInShape(x:number, y:number, shape:Shape) {
 		if (shape.type === 'circle') {
 			const distance = Math.sqrt((x - shape.startX) ** 2 + (y - shape.startY) ** 2);
@@ -90,6 +109,52 @@ export class BoardService {
 
 		return false;
 	}
+
+	selectShape(shape:Shape){
+
+		debugger
+
+		const selectedShape:Shape = _.cloneDeep(shape)
+		this.boardSelectedShape.next(selectedShape)
+
+		this.shapes.forEach(function(element){
+			if(element.id === shape.id){
+				element.strokeStyle = COLORS.selectedStrokeColor.color
+			}
+		})
+
+		this.repaint.next(true)
+	}
+
+	unselectShape(){
+
+		debugger
+		const selectedShape:Shape = this.boardSelectedShape.getValue()
+
+		this.shapes.forEach(function(element){
+			if(element.id === selectedShape.id){
+				element.strokeStyle = selectedShape.strokeStyle
+			}
+		})
+
+		this.boardSelectedShape.next(null)
+		this.repaint.next(true)
+
+	}
+
+	removeShape(shape:Shape,redraw:boolean){
+
+	}
+
+	// redrawSelected(shape:Shape){
+	// 	this.shapes = this.shapes.filter((aShape=>{
+	// 		return aShape.id !== shape.id
+	// 	}))
+
+	// 	this.addShape(shape)
+
+		
+	// }
 
 	get getShapes():Array<any>{
 		return this.shapes		
